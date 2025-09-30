@@ -3,6 +3,8 @@ import { DataSource } from "typeorm";
 import { AccountEntity } from "@infrastructure/entities/AccountEntity";
 import { CustomerEntity } from "@infrastructure/entities/CustomerEntity";
 import { TransactionEntity } from "@infrastructure/entities/TransactionEntity";
+import { AccountReadEntity } from '@infrastructure/read-models/AccountReadEntity';
+import { TransactionReadEntity } from '@infrastructure/read-models/TransactionReadEntity';
 import { EventBus } from "@infrastructure/events/EventBus";
 import { AccountRepositoryImpl } from "@infrastructure/repositories/AccountRepositoryImpl";
 import { AccountService } from "@application/AccountService";
@@ -31,6 +33,20 @@ async function main() {
   eventBus.register("FundsDeposited", new SendDepositNotification());
   eventBus.register("FundsDeposited", new RecordDepositAudit());
   eventBus.register("FundsWithdrawn", new RecordDepositAudit());
+
+  // read-model repositories and projections
+  const accountReadOrm = dataSource.getRepository(AccountReadEntity);
+  const txReadOrm = dataSource.getRepository(TransactionReadEntity);
+  const { AccountReadRepository } = await import('@infrastructure/repositories/read/AccountReadRepository');
+  const { TransactionReadRepository } = await import('@infrastructure/repositories/read/TransactionReadRepository');
+  const accountReadRepo = new AccountReadRepository(accountReadOrm as any);
+  const txReadRepo = new TransactionReadRepository(txReadOrm as any);
+  const { ProjectAccountReadModel } = await import('@application/event-handlers/ProjectAccountReadModel');
+  const { ProjectTransactionReadModel } = await import('@application/event-handlers/ProjectTransactionReadModel');
+  eventBus.register('AccountOpened', new ProjectAccountReadModel(accountReadRepo));
+  eventBus.register('FundsDeposited', new ProjectAccountReadModel(accountReadRepo));
+  eventBus.register('FundsWithdrawn', new ProjectAccountReadModel(accountReadRepo));
+  eventBus.register('TransactionCreated', new ProjectTransactionReadModel(txReadRepo));
 
   const ormRepo = dataSource.getRepository(AccountEntity);
   const txOrm = dataSource.getRepository(TransactionEntity);
@@ -63,8 +79,9 @@ async function main() {
 
   const customersController = new CustomersController(customerService);
   const transactionsController = new TransactionsController(transactionService);
-
-  const app = createApp(accountsController, customersController, transactionsController);
+  const { ReadAccountsController } = await import('@infrastructure/http/ReadAccountsController');
+  const readAccountsController = new ReadAccountsController(accountReadRepo as any);
+  const app = createApp(accountsController, customersController, transactionsController, readAccountsController);
 
   const port = Number(process.env.PORT || 3000);
   app.listen(port, () => console.log(`HTTP server listening on port ${port}`));

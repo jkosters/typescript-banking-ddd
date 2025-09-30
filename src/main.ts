@@ -76,12 +76,20 @@ async function main() {
   const customerService = new CustomerService(customerRepo, eventBus);
   // transactionService delegates to AccountService to mutate aggregates
   const transactionService = new TransactionService(service);
+  const { PaymentGatewayAdapter } = await import('@infrastructure/integrations/payment/PaymentGatewayAdapter');
+  const { PaymentService } = await import('@application/PaymentService');
+  const { PaymentsController } = await import('@infrastructure/http/PaymentsController');
+
+  const paymentAdapter = new PaymentGatewayAdapter(process.env.PAYMENT_URL || 'http://localhost:4000', process.env.PAYMENT_KEY || '');
+  const paymentService = new PaymentService(paymentAdapter);
 
   const customersController = new CustomersController(customerService);
   const transactionsController = new TransactionsController(transactionService);
+  const paymentsController = new PaymentsController(paymentService);
   const { ReadAccountsController } = await import('@infrastructure/http/ReadAccountsController');
   const readAccountsController = new ReadAccountsController(accountReadRepo as any);
   const app = createApp(accountsController, customersController, transactionsController, readAccountsController);
+  app.use('/payments', paymentsController.router);
 
   const port = Number(process.env.PORT || 3000);
   app.listen(port, () => console.log(`HTTP server listening on port ${port}`));

@@ -57,4 +57,42 @@ export class AccountRepositoryImpl implements AccountRepository {
       await this.eventBus.publish(ev);
     }
   }
+
+  async saveAll(accounts: Account[]): Promise<void> {
+    const manager = this.ormRepo.manager;
+    await manager.transaction(async (m) => {
+      const accRepo = m.getRepository(AccountEntity);
+      const txRepository = m.getRepository(TransactionEntity);
+
+      for (const account of accounts) {
+        const accEntity = new AccountEntity();
+        accEntity.id = account.id;
+        accEntity.balance_amount = account.balance.amount;
+        accEntity.balance_currency = account.balance.currency;
+        await accRepo.save(accEntity);
+
+        if (this.txRepo) {
+          const txs = account.getTransactions();
+          for (const t of txs) {
+            const te = new TransactionEntity();
+            te.id = t.id;
+            te.account_id = t.accountId;
+            te.type = t.type;
+            te.amount = t.amount.amount;
+            te.currency = t.amount.currency;
+            te.occurred_on = t.occurredOn;
+            await txRepository.save(te);
+          }
+        }
+      }
+    });
+
+    // publish events for all accounts
+    for (const account of accounts) {
+      const events = account.pullDomainEvents();
+      for (const ev of events) {
+        await this.eventBus.publish(ev);
+      }
+    }
+  }
 }

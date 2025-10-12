@@ -20,15 +20,15 @@ export class AccountsController {
   async deposit(req: Request, res: Response) {
     const { id } = req.params;
     const { amount, currency } = req.body;
-    await this.service.deposit(id, Number(amount), currency);
-    res.status(200).json({ ok: true });
+  const txId = await this.service.deposit(id, Number(amount), currency);
+  res.status(200).json({ transactionId: txId });
   }
 
   async withdraw(req: Request, res: Response) {
     const { id } = req.params;
     const { amount, currency } = req.body;
-    await this.service.withdraw(id, Number(amount), currency);
-    res.status(200).json({ ok: true });
+  const txId = await this.service.withdraw(id, Number(amount), currency);
+  res.status(200).json({ transactionId: txId });
   }
 
   async getAccount(req: Request, res: Response) {

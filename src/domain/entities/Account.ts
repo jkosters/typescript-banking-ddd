@@ -24,6 +24,7 @@ export class Account extends Entity {
   this.transactions.push(tx);
   this.addDomainEvent(new FundsDeposited(this.id, amount.amount, amount.currency));
   this.addDomainEvent(new TransactionCreated(tx.id, tx.accountId, tx.type, tx.amount.amount, tx.amount.currency));
+  return tx.id;
   }
 
   withdraw(amount: Money) {
@@ -33,6 +34,7 @@ export class Account extends Entity {
   this.transactions.push(tx);
   this.addDomainEvent(new FundsWithdrawn(this.id, amount.amount, amount.currency));
   this.addDomainEvent(new TransactionCreated(tx.id, tx.accountId, tx.type, tx.amount.amount, tx.amount.currency));
+  return tx.id;
   }
 
   deactivate() { this._isActive = false; }

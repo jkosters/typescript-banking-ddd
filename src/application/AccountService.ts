@@ -12,22 +12,24 @@ export class AccountService {
     return account.id;
   }
 
-  async deposit(accountId: string, amount: number, currency: string): Promise<void> {
+  async deposit(accountId: string, amount: number, currency: string): Promise<string> {
     const account = await this.repo.findById(accountId);
     if (!account) throw new Error("Account not found");
-    account.deposit(new Money(amount, currency));
+    const txId = account.deposit(new Money(amount, currency));
     await this.repo.save(account);
+    return txId;
   }
 
-  async withdraw(accountId: string, amount: number, currency: string): Promise<void> {
+  async withdraw(accountId: string, amount: number, currency: string): Promise<string> {
     const account = await this.repo.findById(accountId);
     if (!account) throw new Error("Account not found");
 
     const spec = new MinimumBalanceSpecification(amount).and(new AccountActiveSpecification());
     if (!spec.isSatisfiedBy(account)) throw new Error("Withdrawal conditions not met");
 
-    account.withdraw(new Money(amount, currency));
-    await this.repo.save(account);
+  const txId = account.withdraw(new Money(amount, currency));
+  await this.repo.save(account);
+  return txId;
   }
 
   // read model helper for HTTP controllers

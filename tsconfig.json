@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
+    "target": "es2020",
+    "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
@@ -11,11 +11,17 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "baseUrl": "./",
+    
     "paths": {
       "@domain/*": ["src/domain/*"],
       "@infrastructure/*": ["src/infrastructure/*"],
       "@application/*": ["src/application/*"]
     }
   },
-  "include": ["src"]
+"ts-node": { // Configuration for ts-node
+    "transpileOnly": true, // Speeds up development
+    "require": ["tsconfig-paths/register"] // Enable path aliases in ts-node
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"] 
 }

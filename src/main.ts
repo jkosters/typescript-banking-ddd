@@ -1,11 +1,12 @@
 import "reflect-metadata";
+import "tsconfig-paths/register";
 import { DataSource } from "typeorm";
 import { AccountEntity } from "@infrastructure/entities/AccountEntity";
 import { CustomerEntity } from "@infrastructure/entities/CustomerEntity";
 import { TransactionEntity } from "@infrastructure/entities/TransactionEntity";
 import { AccountReadEntity } from '@infrastructure/read-models/AccountReadEntity';
 import { TransactionReadEntity } from '@infrastructure/read-models/TransactionReadEntity';
-import { EventBus } from "@infrastructure/events/EventBus";
+import { EventBus, EventHandler } from "@infrastructure/events/EventBus";
 import { AccountRepositoryImpl } from "@infrastructure/repositories/AccountRepositoryImpl";
 import { AccountService } from "@application/AccountService";
 import { AccountFactory } from "@domain/factories/AccountFactory";
@@ -13,6 +14,7 @@ import { SendDepositNotification } from "@application/event-handlers/SendDeposit
 import { RecordDepositAudit } from "@application/event-handlers/RecordDepositAudit";
 import { createApp } from "@infrastructure/http/App";
 import { AccountsController } from "@infrastructure/http/AccountsController";
+import { DomainEvent } from "@domain/events/DomainEvent";
 
 async function main() {
   const dataSource = new DataSource({
@@ -30,7 +32,7 @@ async function main() {
   await dataSource.initialize();
 
   const eventBus = new EventBus();
-  eventBus.register("FundsDeposited", new SendDepositNotification());
+  eventBus.register("FundsDeposited", new SendDepositNotification() as EventHandler<DomainEvent>);
   eventBus.register("FundsDeposited", new RecordDepositAudit());
   eventBus.register("FundsWithdrawn", new RecordDepositAudit());
 

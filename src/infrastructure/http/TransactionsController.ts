@@ -18,6 +18,6 @@ export class TransactionsController {
   async listByAccount(req: Request, res: Response) {
     const { accountId } = req.params;
     const items = await this.service.findByAccount(accountId);
-    res.json(items.map(i => ({ id: i.id, accountId: i.accountId, type: i.type, amount: i.amount.amount, currency: i.amount.currency, occurredOn: i.occurredOn })));
+    res.json(items.map((i: { id: any; accountId: any; type: any; amount: { amount: any; currency: any; }; occurredOn: any; }) => ({ id: i.id, accountId: i.accountId, type: i.type, amount: i.amount.amount, currency: i.amount.currency, occurredOn: i.occurredOn })));
   }
 }

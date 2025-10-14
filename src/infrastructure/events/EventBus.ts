@@ -1,6 +1,6 @@
 import { DomainEvent } from "@domain/events/DomainEvent";
 
-type EventHandler<E = DomainEvent> = {
+export type EventHandler<E = DomainEvent> = {
   handle: (event: E) => Promise<void> | void;
 };
 
